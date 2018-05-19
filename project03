@@ -1,0 +1,99 @@
+from tkinter import *
+import random
+import time
+
+
+# Определить свойства и функции шара
+
+class Ball:
+    def __init__(self, canvas, color, size, paddle):
+        self.canvas = canvas
+        self.paddle = paddle
+        self.id = canvas.create_oval(10, 10, size, size, fill=color)
+        self.canvas.move(self.id, 245, 100)
+        self.speed_x = random.randrange(-3, 3)
+        self.speed_y = -1
+        self.hit_bottom = False
+        self.score = 0
+
+    def draw(self):
+        self.canvas.move(self.id, self.speed_x, self.speed_y)
+        pos = self.canvas.coords(self.id)
+        if pos[1] <= 0:
+            self.speed_y = 3
+        if pos[3] >= 400:
+            self.hit_bottom = True
+        if pos[0] <= 0:
+            self.speed_x = 3
+        if pos[2] >= 500:
+            self.speed_x = -3
+        if self.hit_paddle(pos) == True:
+            self.speed_y = -3
+            self.speed_x = random.randrange(-3,3)
+            self.score += 1
+
+    def hit_paddle(self, pos):
+        paddle_pos = self.canvas.coords(self.paddle.id)
+        if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2]:
+
+            if pos[3] >= paddle_pos[1] and pos[3] <= paddle_pos[3]:
+
+                return True
+
+        return False
+
+# Определить свойства и функции ракетки
+
+
+class Paddle:
+
+    def __init__(self, canvas, color):
+        self.canvas = canvas
+        self.id = canvas.create_rectangle(0,0, 100, 10, fill = color)
+        self.canvas.move(self.id, 200, 300)
+        self.speed_x = 0
+        self.canvas.bind_all('<KeyPress-Left>', self.move_left)
+        self.canvas.bind_all('<KeyPress-Right>', self.move_right)
+
+
+    def draw(self):
+        self.canvas.move(self.id, self.speed_x, 0)
+        pos = self.canvas.coords(self.id)
+        if pos[0] <= 0:
+            self.speed_x = 0
+        if pos[2] >= 500:
+            self.speed_x = 0
+
+    def move_left(self, evt):
+        self.speed_x = -2
+
+    def move_right(self, evt):
+        self.speed_x = 2
+
+# Создать окно и холст, чтобы рисовать
+
+
+tk = Tk()
+tk.title('Game ping pong')
+canvas = Canvas(tk, width=500, height=400, bd=0, bg='green')
+canvas.pack()
+label = canvas.create_text(20, 20, anchor = NW, font='Arial 20', fill='black', text = 'Score: 0')
+tk.update()
+
+paddle = Paddle(canvas, 'orange')
+ball = Ball(canvas, 'red', 30, paddle)
+
+# Анимационный цикл
+
+while ball.hit_bottom == False:
+    ball.draw()
+    paddle.draw()
+    canvas.itemconfig(label, text='Score: ' + str(ball.score))
+    tk.update_idletasks()
+    tk.update()
+    time.sleep(0.01)
+
+# Game Over
+go_label = canvas.create_text(250, 200, text='GAME OVER', font=('Helvetica', 40))
+
+tk.update()
